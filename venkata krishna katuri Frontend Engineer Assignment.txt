@@ -1,0 +1,105 @@
+1.Explain what the simple List component does ?
+ans ->
+
+The above code defines a React component called List that displays a list of items with a selectable single item.
+
+The component receives an array of items as a prop and renders them using the SingleListItem component.
+
+The SingleListItem component is a functional component that renders a single item in the list. It receives four props:
+
+->index: a number representing the index of the item in the list
+
+->isSelected: a boolean value indicating whether the item is currently selected
+
+->onClickHandler: a callback function that handles the click event on the list item
+
+->text: the text content of the list item
+
+-->The WrappedListComponent is a higher-order component that wraps the List component and provides state management for the selected item.
+
+-->It maintains the index of the currently selected item using the useState hook, and sets it to null whenever the items prop changes using the useEffect hook.
+
+->The handleClick function updates the selectedIndex state whenever a list item is clicked, and this state is passed to the SingleListItem component to determine
+
+if it is currently selected or not. Overall, the List component renders a list of items with the ability to select a single item, and it provides a callback function to handle the selection event.
+
+2. What problems / warnings are there with code?
+
+ ans-> The warnings that i found during execution are follows:
+->In the WrappedListComponent, the state variable setSelectedIndex should be const [selectedIndex, setSelectedIndex] = useState(null);. The useState hook returns an array of two elements, where the first element is the state variable and the second element is the function to update the state variable.
+
+->The PropTypes for the items prop in WrappedListComponent are incorrect. The correct propType should be PropTypes.arrayOf(PropTypes.shape({text: PropTypes.string.isRequired})).
+
+->In the SingleListItem component, the onClickHandler prop is being called instead of passed as a callback function. To fix this, the line onClick={onClickHandler(index)} should be changed to onClick={() => onClickHandler(index)}.
+
+->The isSelected prop in the SingleListItem component should be compared to the index of the item, not just passed as a boolean value. The correct comparison would be isSelected === index ? true : false.
+
+->The SingleListItem component is not memoized correctly. The memo HOC should be applied to the original component (WrappedSingleListItem) rather than the component variable used to store it (SingleListItem). To fix this, the line const SingleListItem = memo(WrappedSingleListItem); should be changed to const SingleListItem = WrappedSingleListItem; and then export default memo(List); should be changed to export default List;.
+
+Fixing these issues will improve the code's functionality and reduce the likelihood of bugs.
+
+3.Please fix, optimize, and/or modify the component as much as you think is necessary ?
+
+ans ->
+
+import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
+
+// Single List Item
+const SingleListItem = ({ index, isSelected, onClickHandler, text }) => {
+  return (
+    <li
+      style={{ backgroundColor: isSelected ? 'green' : 'red' }}
+      onClick={onClickHandler}
+    >
+      {text}
+    </li>
+  );
+};
+
+SingleListItem.propTypes = {
+  index: PropTypes.number.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onClickHandler: PropTypes.func.isRequired,
+  text: PropTypes.string.isRequired,
+};
+
+// List Component
+const List = ({ items }) => {
+  const [selectedIndex, setSelectedIndex] = useState(null);
+
+  useEffect(() => {
+    setSelectedIndex(null);
+  }, [items]);
+
+  const handleClick = useCallback(
+    (index) => {
+      setSelectedIndex(index === selectedIndex ? null : index);
+    },
+    [selectedIndex]
+  );
+
+  return (
+    <ul style={{ textAlign: 'left' }}>
+      {items.map((item, index) => (
+        <SingleListItem
+          key={index}
+          onClickHandler={() => handleClick(index)}
+          text={item.text}
+          index={index}
+          isSelected={selectedIndex === index}
+        />
+      ))}
+    </ul>
+  );
+};
+
+List.propTypes = {
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      text: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};
+
+export default List;
